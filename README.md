@@ -1,3 +1,3 @@
-# ETF Signal Advisor
+# etf-signal-service
 
-An AWS Lambda-based service that analyzes ETFs daily and sends Buy Score (0-100) recommendations with tiered action.å
+trying to send daily emails to myself if now is a good time to buy S&P500 or not

@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ETF Advisor - Basic Lambda function
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 256
+    Runtime: java17
+
+Resources:
+  ETFAdvisorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: etf-advisor-handler
+      CodeUri: .
+      Handler: com.etfadvisor.ETFAdvisorHandler::handleRequest
+      Description: ETF Advisor - Basic test function
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 14 * * ? *)
+            Description: Daily run
+            Enabled: true
+
+Outputs:
+  ETFAdvisorFunctionArn:
+    Description: ARN of the ETF Advisor Lambda function
+    Value: !GetAtt ETFAdvisorFunction.Arn

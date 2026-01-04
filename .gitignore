@@ -1,0 +1,30 @@
+# Java compiled files
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
