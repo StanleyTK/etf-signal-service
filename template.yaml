@@ -4,9 +4,20 @@ Description: ETF Advisor - Basic Lambda function
 
 Globals:
   Function:
-    Timeout: 60
-    MemorySize: 256
+    Timeout: 300
+    MemorySize: 512
     Runtime: java17
+    Environment:
+      Variables:
+        TICKERS: "VOO,VTI,MGK,QQQ,VTV,VB,VXUS,VEA"
+        ZSCORE_WINDOW: 30
+        LOOKBACK_HIGH_DAYS: 126
+        SMA_DAYS: 200
+        DRAWDOWN_MAX: 0.12
+        ZSCORE_MAX: 2.5
+        TIER_STRONG_BUY: 75
+        TIER_BUY: 55
+        TIER_DCA_ONLY: 35
 
 Resources:
   ETFAdvisorFunction:
@@ -15,13 +26,13 @@ Resources:
       FunctionName: etf-advisor-handler
       CodeUri: .
       Handler: com.etfadvisor.ETFAdvisorHandler::handleRequest
-      Description: ETF Advisor - Basic test function
+      Description: ETF Advisor - Daily analysis and signal generation
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
-            Schedule: cron(0 14 * * ? *)
-            Description: Daily run
+            Schedule: cron(0 20 ? * MON-FRI *)
+            Description: ETF advisor run at 3 PM EST, Monday-Friday
             Enabled: true
 
 Outputs:
