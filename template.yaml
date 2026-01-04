@@ -9,7 +9,7 @@ Globals:
     Runtime: java17
     Environment:
       Variables:
-        TICKERS: "VOO,VTI,MGK,QQQ,VTV,VB,VXUS,VEA"
+        TICKERS: "VOO,VT,MGK,IBIT"
         ZSCORE_WINDOW: 30
         LOOKBACK_HIGH_DAYS: 126
         SMA_DAYS: 200
@@ -27,6 +27,9 @@ Resources:
       CodeUri: .
       Handler: com.etfadvisor.ETFAdvisorHandler::handleRequest
       Description: ETF Advisor - Daily analysis and signal generation
+      Policies:
+        - SESCrudPolicy:
+            IdentityName: stanleykim2003@gmail.com
       Events:
         DailySchedule:
           Type: Schedule

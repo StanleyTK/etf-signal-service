@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 public class Config {
     
     private final List<String> tickers;
+    private final String emailFrom;
+    private final String emailTo;
     
     // Algorithm parameters
     private final int zscoreWindow;
@@ -32,6 +34,10 @@ public class Config {
             tickersStr = "VOO";
         }
         this.tickers = parseTickers(tickersStr);
+        
+        // Email configuration - hardcoded
+        this.emailFrom = "stanleykim2003@gmail.com";
+        this.emailTo = "stanleykim2003@gmail.com";
         
         // Algorithm parameters (with defaults from notebook)
         this.zscoreWindow = getIntEnv("ZSCORE_WINDOW", 30);
@@ -90,6 +96,8 @@ public class Config {
     
     // Getters
     public List<String> getTickers() { return tickers; }
+    public String getEmailFrom() { return emailFrom; }
+    public String getEmailTo() { return emailTo; }
     public int getZscoreWindow() { return zscoreWindow; }
     public int getLookbackHighDays() { return lookbackHighDays; }
     public int getSmaDays() { return smaDays; }

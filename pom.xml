@@ -24,6 +24,11 @@
             <artifactId>aws-lambda-java-core</artifactId>
             <version>1.2.3</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ses</artifactId>
+            <version>1.12.565</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -51,16 +56,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-
-            <!-- Exec plugin for running Main class locally -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <mainClass>com.etfadvisor.Main</mainClass>
-                </configuration>
             </plugin>
         </plugins>
     </build>

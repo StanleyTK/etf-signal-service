@@ -1,13 +1,20 @@
 package com.etfadvisor;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +24,7 @@ import java.util.Map;
 public class YahooFinanceHelper {
     
     private static final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     
     /**
      * Fetches historical daily price data from Yahoo Finance API.
@@ -53,64 +61,83 @@ public class YahooFinanceHelper {
         HttpResponse<String> httpResponse = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         
         if (httpResponse.statusCode() != 200) {
-            throw new IOException("Failed to fetch data: HTTP " + httpResponse.statusCode());
+            throw new IOException("Failed to fetch data for " + ticker + ": HTTP " + httpResponse.statusCode() + 
+                " - " + httpResponse.body());
+        }
+        
+        String responseBody = httpResponse.body();
+        if (responseBody == null || responseBody.isEmpty()) {
+            throw new IOException("Empty response from Yahoo Finance for " + ticker);
         }
         
         // Parse JSON response to extract close prices
-        return parseHistoricalResponse(httpResponse.body(), endDate);
+        return parseHistoricalResponse(responseBody, endDate);
     }
     
     /**
-     * Parses Yahoo Finance historical data response to extract close prices.
+     * Parses Yahoo Finance historical data response to extract close prices using Jackson.
      */
-    private static java.util.List<Double> parseHistoricalResponse(String responseBody, LocalDate endDate) throws IOException {
-        java.util.List<Double> closes = new java.util.ArrayList<>();
+    private static List<Double> parseHistoricalResponse(String responseBody, LocalDate endDate) throws IOException {
+        List<Double> closes = new ArrayList<>();
         
         try {
-            // Find timestamps and closes arrays in JSON
-            int timestampIndex = responseBody.indexOf("\"timestamp\":[");
-            int closeIndex = responseBody.indexOf("\"close\":[");
+            JsonNode rootNode = objectMapper.readTree(responseBody);
+            JsonNode chartNode = rootNode.path("chart");
+            JsonNode resultNode = chartNode.path("result");
             
-            if (timestampIndex == -1 || closeIndex == -1) {
-                throw new IOException("Invalid response format");
+            if (!resultNode.isArray() || resultNode.size() == 0) {
+                throw new IOException("No result data in Yahoo Finance response");
             }
             
-            // Extract timestamps array
-            int tsStart = responseBody.indexOf("[", timestampIndex) + 1;
-            int tsEnd = responseBody.indexOf("]", tsStart);
-            String timestampsStr = responseBody.substring(tsStart, tsEnd);
+            JsonNode firstResult = resultNode.get(0);
+            JsonNode indicators = firstResult.path("indicators");
+            JsonNode quote = indicators.path("quote");
             
-            // Extract closes array
-            int closeStart = responseBody.indexOf("[", closeIndex) + 1;
-            int closeEnd = responseBody.indexOf("]", closeStart);
-            String closesStr = responseBody.substring(closeStart, closeEnd);
+            if (!quote.isArray() || quote.size() == 0) {
+                throw new IOException("No quote data in Yahoo Finance response");
+            }
             
-            // Parse arrays (simple parsing - split by comma)
-            String[] timestampParts = timestampsStr.split(",");
-            String[] closeParts = closesStr.split(",");
+            JsonNode timestampsNode = firstResult.path("timestamp");
+            JsonNode closesNode = quote.get(0).path("close");
+            
+            if (!timestampsNode.isArray() || !closesNode.isArray()) {
+                throw new IOException("Invalid data format: timestamps or closes not arrays");
+            }
             
             // Match timestamps with closes and filter by endDate
-            for (int i = 0; i < Math.min(timestampParts.length, closeParts.length); i++) {
+            int minLength = Math.min(timestampsNode.size(), closesNode.size());
+            for (int i = 0; i < minLength; i++) {
+                JsonNode timestampNode = timestampsNode.get(i);
+                JsonNode closeNode = closesNode.get(i);
+                
+                if (timestampNode.isNull() || closeNode.isNull()) {
+                    continue;
+                }
+                
                 try {
-                    long timestamp = Long.parseLong(timestampParts[i].trim());
-                    LocalDate date = LocalDate.ofEpochDay(timestamp / 86400);
+                    long timestamp = timestampNode.asLong();
+                    LocalDate date = LocalDate.ofInstant(Instant.ofEpochSecond(timestamp), ZoneId.systemDefault());
                     
                     // Only include data up to endDate
                     if (!date.isAfter(endDate)) {
-                        String closeStr = closeParts[i].trim();
-                        if (!closeStr.equals("null") && !closeStr.isEmpty()) {
-                            double close = Double.parseDouble(closeStr);
-                            if (close > 0) {
-                                closes.add(close);
-                            }
+                        double close = closeNode.asDouble();
+                        if (close > 0 && !Double.isNaN(close) && !Double.isInfinite(close)) {
+                            closes.add(close);
                         }
                     }
-                } catch (NumberFormatException e) {
+                } catch (Exception e) {
                     // Skip invalid entries
                     continue;
                 }
             }
             
+            if (closes.isEmpty()) {
+                throw new IOException("No valid price data found in response");
+            }
+            
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            throw new IOException("Failed to parse JSON response: " + e.getMessage() + 
+                " (Response length: " + (responseBody != null ? responseBody.length() : 0) + ")", e);
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {

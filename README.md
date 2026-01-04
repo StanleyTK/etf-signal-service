@@ -1,122 +1,44 @@
 # etf-signal-service
 
-trying to send daily emails to myself if now is a good time to buy S&P500 or not
+This is a personal service that sends me emails with buy signals for long-term investing. 
 
-sample results:
+The service runs automatically Monday-Friday at 3 PM EST via AWS Lambda (triggered by EventBridge Scheduler) and sends email reports through AWS SES. Each daily email includes today's buy recommendations (STRONG_BUY, BUY, DCA_ONLY, WAIT) along with analysis of the past 10 trading days showing price, indicators, and buy scores.
 
-```
-{
-  "tier_counts": {
-    "DCA_ONLY": 2,
-    "WAIT": 6
-  },
-  "results": [
-    {
-      "ticker": "VOO",
-      "close_today": 628.2999877929688,
-      "buy_score": 28,
-      "tier": "WAIT",
-      "sma_200": 577.0126504516602,
-      "trend_score": 1,
-      "drawdown_score": 0.08584891187593813,
-      "zscore_score": 0,
-      "zscore": 0.3465170499477881,
-      "drawdown_6m": -0.010301869425112575,
-      "status": "OK"
-    },
-    {
-      "ticker": "VTI",
-      "close_today": 336.30999755859375,
-      "buy_score": 28,
-      "tier": "WAIT",
-      "sma_200": 308.97749908447264,
-      "trend_score": 1,
-      "drawdown_score": 0.08753107157749296,
-      "zscore_score": 0,
-      "zscore": 0.33236155203776907,
-      "drawdown_6m": -0.010503728589299155,
-      "status": "OK"
-    },
-    {
-      "ticker": "MGK",
-      "close_today": 410.8599853515625,
-      "buy_score": 40,
-      "tier": "DCA_ONLY",
-      "sma_200": 372.6749501037598,
-      "trend_score": 1,
-      "drawdown_score": 0.2940905863783076,
-      "zscore_score": 0.0727064265151547,
-      "zscore": -0.18176606628788675,
-      "drawdown_6m": -0.03529087036539691,
-      "status": "OK"
-    },
-    {
-      "ticker": "QQQ",
-      "close_today": 613.1199951171875,
-      "buy_score": 40,
-      "tier": "DCA_ONLY",
-      "sma_200": 558.4906497192383,
-      "trend_score": 1,
-      "drawdown_score": 0.29688440419019063,
-      "zscore_score": 0.0809080378849028,
-      "zscore": -0.20227009471225701,
-      "drawdown_6m": -0.035626128502822874,
-      "status": "OK"
-    },
-    {
-      "ticker": "VTV",
-      "close_today": 192.80999755859375,
-      "buy_score": 25,
-      "tier": "WAIT",
-      "sma_200": 179.25064979553224,
-      "trend_score": 1,
-      "drawdown_score": 0.018113050864763485,
-      "zscore_score": 0,
-      "zscore": 0.9796579839265223,
-      "drawdown_6m": -0.002173566103771618,
-      "status": "OK"
-    },
-    {
-      "ticker": "VB",
-      "close_today": 261.5400085449219,
-      "buy_score": 31,
-      "tier": "WAIT",
-      "sma_200": 242.000400390625,
-      "trend_score": 1,
-      "drawdown_score": 0.1461873164060749,
-      "zscore_score": 0,
-      "zscore": 0.5487541852661221,
-      "drawdown_6m": -0.017542477968728987,
-      "status": "OK"
-    },
-    {
-      "ticker": "VXUS",
-      "close_today": 76.54000091552734,
-      "buy_score": 25,
-      "tier": "WAIT",
-      "sma_200": 69.97069988250732,
-      "trend_score": 1,
-      "drawdown_score": 0,
-      "zscore_score": 0,
-      "zscore": 1.5549307272641069,
-      "drawdown_6m": 0,
-      "status": "OK"
-    },
-    {
-      "ticker": "VEA",
-      "close_today": 63.20000076293945,
-      "buy_score": 25,
-      "tier": "WAIT",
-      "sma_200": 57.512500038146975,
-      "trend_score": 1,
-      "drawdown_score": 0,
-      "zscore_score": 0,
-      "zscore": 1.3059528806022225,
-      "drawdown_6m": 0,
-      "status": "OK"
-    }
-  ],
-  "statusCode": 200,
-  "run_date": "2026-01-04"
-}
-```
+![Email Summary](screenshots/email-summary.png)
+
+![Email Details](screenshots/email-details.png)
+
+## Algorithm Details
+
+The buy signal algorithm is implemented in [`algorithm_backtest.ipynb`](algorithm_backtest.ipynb), which contains:
+- Historical backtesting on 5 years of data
+- Buy Score calculation (0-100) based on SMA 200, 6-month drawdown, and 30-day z-score
+- Tier classification (STRONG_BUY, BUY, DCA_ONLY, WAIT)
+- Performance analysis and forward return statistics
+
+## My investing setup
+
+I use this service to support a simple, rules-based strategy across two accounts.
+
+### Roth IRA
+- 100% VT  
+- Long-term, global exposure  
+- No trading, no timing, just consistent contributions  
+
+### Personal (taxable) account
+- 95% MGK  
+- 5% IBIT  
+- Growth-focused with a small high-risk allocation  
+
+## How I use signals
+
+These signals are not trade commands.  
+They are simply a way for me to decide when it feels reasonable to add new money.
+
+I only buy when:
+- I have new income to invest  
+- The buy score crosses a threshold I'm comfortable with  
+
+The goal is to stay consistent, avoid emotional decisions, and not overthink day-to-day market moves.
+
+This system is meant for long-term accumulation, not short-term trading.
